@@ -40,11 +40,11 @@
 - Создаем инстанс postgres2, ставим postgres 14
 - Останавливаем кластер:
 
-	`sudo -u postgres pg_ctlcluster 14 main stop`
+	``sudo -u postgres pg_ctlcluster 14 main stop``
 
 - Удаляем файлы с данными:
 
-	`sudo rm -f /var/lib/postgres/{*,.*}`
+	``sudo rm -f /var/lib/postgres/{*,.*}``
 
 - Делаем deattach диска с postgres, attach to postgres2
 
@@ -70,8 +70,8 @@
 
 - Проверяем целостность данных в таблице:
 
-	sudo -u postgres psql
-	select * from test;
+	``sudo -u postgres psql``
+	``select * from test;``
 
 
 **Имя проекта GCP:** postgres2021-19870518
