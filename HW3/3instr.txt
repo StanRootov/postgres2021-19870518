@@ -1,0 +1,136 @@
+-- развернем ВМ postgres в GCE
+gcloud beta compute --project=celtic-house-266612 instances create postgres --zone=us-central1-a --machine-type=e2-medium --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=933982307116-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --image=ubuntu-2104-hirsute-v20210928 --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-ssd --boot-disk-device-name=postgres --no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring --reservation-affinity=any
+ 
+gcloud compute ssh postgres
+
+sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y -q && sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - && sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt -y install postgresql-14
+
+
+
+-- pg_updatecluster
+pg_createcluster 13 main 
+
+
+sudo DEBIAN_FRONTEND=noninteractive apt -y install postgresql-13
+
+pg_lsclusters
+
+pg_upgradecluster 13 main
+
+man pg_upgradecluster
+
+sudo pg_upgradecluster 13 main upgrade13
+
+sudo pg_renamecluster 13 main main13
+
+pg_lsclusters
+
+sudo -u postgres psql -p 5433
+
+CREATE ROLE testpass PASSWORD 'testpass' LOGIN;
+
+sudo -u postgres psql -p 5433 -U testpass -h localhost -d postgres -W
+
+sudo pg_upgradecluster 13 main13
+
+pg_lsclusters
+
+sudo pg_dropcluster 13 main13
+
+sudo cat /etc/postgresql/14/main13/pg_hba.conf
+
+sudo nano /etc/postgresql/14/main13/pg_hba.conf
+
+sudo pg_ctlcluster 14 main13 restart
+-- error
+sudo -u postgres psql -p 5433 -U testpass -h localhost -d postgres -W
+
+
+sudo -u postgres psql -p 5433
+ALTER USER testpass PASSWORD 'testpass';
+exit
+
+sudo -u postgres psql -p 5433 -U testpass -h localhost -d postgres -W
+
+-- change back to md5
+
+sudo nano /etc/postgresql/14/main13/pg_hba.conf
+
+sudo pg_ctlcluster 14 main13 restart
+sudo -u postgres psql -p 5433 -U testpass -h localhost -d postgres -W
+
+
+-- Откроем доступ извне:
+sudo pg_conftool 14 main13 set listen_addresses '*'
+sudo nano /etc/postgresql/14/main13/pg_hba.conf
+sudo pg_ctlcluster 14 main13 restart
+
+
+sudo pg_ctlcluster 14 main13 stop
+sudo pg_dropcluster 14 main13
+
+psql -p 5433 -U testpass -h 34.133.14.203 -d postgres -W
+
+--cloud sql
+-- 9tvGLCXfuZBQbDf
+
+psql -p 5432 -U postgres -h 35.192.153.90 -d postgres -W
+
+
+-- docker
+
+-- поставим докер
+https://docs.docker.com/engine/install/ubuntu/
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+rm get-docker.sh
+sudo usermod -aG docker $USER
+
+
+1. Создаем docker-сеть: 
+sudo docker network create pg-net
+2. подключаем созданную сеть к контейнеру сервера Postgres:
+sudo docker run --name pg-docker --network pg-net -e POSTGRES_PASSWORD=postgres -d -p 5432:5432 -v /var/lib/postgres:/var/lib/postgresql/data postgres:14
+3. Запускаем отдельный контейнер с клиентом в общей сети с БД: 
+sudo docker run -it --rm --network pg-net --name pg-client postgres:14 psql -h pg-docker -U postgres
+4. Проверяем, что подключились через отдельный контейнер:
+sudo docker ps -a
+
+-- подключение без открытия порта наружу
+sudo docker run --name pg-server --network pg-net -e POSTGRES_PASSWORD=postgres -d -v /var/lib/postgres:/var/lib/postgresql/data postgres:14
+sudo docker run -it --rm --network pg-net --name pg-client postgres:14 psql -h pg-server -U postgres
+
+psql -p 5432 -U postgres -h 34.133.14.203 -d postgres -W
+
+-- зайти внутрь контейнера
+sudo docker exec -it pg-docker bash
+
+-- установить VIM & NANO
+apt-get update
+apt-get install vim nano -y
+
+psql -U postgres
+
+show hba_file;
+show config_file;
+show data_directory;
+
+sudo docker ps
+
+sudo docker stop
+
+sudo -u postgres psql -h localhost
+
+-- docker compose
+sudo apt install docker-compose -y
+
+scp /mnt/c/download/docker-compose.yml aeugene@34.133.14.203:/home/aeugene/
+
+cat docker-compose.yml
+sudo docker-compose up -d
+
+-- password - secret
+sudo -u postgres psql -h localhost
+
+-- удалим наш проект
+gcloud compute instances delete postgres
