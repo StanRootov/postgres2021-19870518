@@ -1,0 +1,57 @@
+# NETWORK - без этого не завдеться демка
+docker network create my
+
+# MONITOR - тут и далее мы используем аутентификацию по паролю за вместо trust - наибольших головняк
+docker run --network=my --hostname=monitor -it --rm -e PGDATA=/tmp/data -e PGPORT=5000 -p 5000:5000 --name=monitor citusdata/pg_auto_failover:v1.6.1 pg_autoctl create monitor --ssl-self-signed --auth md5 --run
+
+# пароль надо добавлять руками
+docker exec -it monitor psql "postgres://localhost:5000/pg_auto_failover" -c "ALTER USER autoctl_node PASSWORD 'autoctl_node_password'"
+# убедиться что пускаем по паролю
+docker exec -it monitor cat /tmp/data/pg_hba.conf
+
+# NODE1 - подключиться автоматом, т.к. передали пароль в connection string к monitor
+docker run --network=my --hostname=node1 -it --rm -e PGDATA=/tmp/data -e PGPORT=5001 -p 5001:5001 --link=monitor --name=node1 citusdata/pg_auto_failover:v1.6.1 pg_autoctl create postgres --ssl-self-signed --auth md5 --pg-hba-lan --username demo --dbname demo --monitor postgresql://autoctl_node:autoctl_node_password@monitor:5000/pg_auto_failover --run
+
+# задаем в настройках для pg_auto_failover пароль от pgautofailover_replicator пользователя
+docker exec -it node1 pg_autoctl config set replication.password replication_password
+# дублируем его же в базе
+docker exec -it node1 psql "postgres://localhost:5001/demo" -c "ALTER USER pgautofailover_replicator PASSWORD 'replication_password'"
+# и еще один для пользователя pgautofailover_monitor
+docker exec -it node1 psql "postgres://localhost:5001/demo" -c "ALTER USER pgautofailover_monitor PASSWORD 'monitor_password'"
+
+# демо табличка с данными
+docker exec -it node1 psql "postgres://localhost:5001/demo" -c "CREATE TABLE t1(a int)"
+docker exec -it node1 psql "postgres://localhost:5001/demo" -c "INSERT INTO t1 VALUES (1), (2)"
+
+# проверим что мы все еще пускаем всех по паролям
+docker exec -it node1 cat /tmp/data/pg_hba.conf
+
+
+# NODE2 - один в один та же команда что и для node1, за исключением портов, имени контейнера и т.п.
+docker run --network=my --hostname=node2 -it --rm -e PGPASSWORD=replication_password -e PGDATA=/tmp/data -e PGPORT=5002 -p 5002:5002 --link=monitor --name=node2 citusdata/pg_auto_failover:v1.6.1 pg_autoctl create postgres --ssl-self-signed --auth md5 --pg-hba-lan --username demo --dbname demo --monitor postgresql://autoctl_node:autoctl_node_password@monitor:5000/pg_auto_failover --run
+
+# опять же задаем пароль для pgautofailover_replicator
+docker exec -it node2 pg_autoctl config set replication.password replication_password
+# смотрим что у нас по авторизации
+docker exec -it node2 cat /tmp/data/pg_hba.conf
+# что с кластером
+docker exec -it monitor pg_autoctl show state
+# приехали ли данные
+docker exec -it node2 psql "postgres://localhost:5002/demo" -c "select * from t1"
+
+# должно вывести connection string, но при авторизации по паролю не работает
+# docker exec -it monitor pg_autoctl show uri
+
+# пробуем подключиться "снаружи"
+docker run -it --rm --network=my postgres:13-alpine psql "postgres://node1:5001,node2:5002/demo?target_session_attrs=read-write&sslmode=require" -U demo -c "select * from t1"
+
+# по скольку у нас вход по паролю, нужно его задать
+docker exec -it node1 psql "postgres://localhost:5001/demo" -c "ALTER USER demo PASSWORD 'demo'"
+
+
+
+# SWITCHOVER
+
+docker exec -it monitor pg_autoctl show state
+
+docker exec -it monitor pg_autoctl perform switchover
