@@ -68,12 +68,13 @@ SELECT payment_type,round(sum(tips)/sum(trip_total)*100, 0) + 0 as tips_percent,
 
 Time: 474088,648 ms (07:54,089)
 ```
-## Хотел сохдать индекс и повторно выполним запрос, но получил ошибку, возможно связанную с тем, что закончилась память на координаторе(не менял значение в файлике - 10ГБ):
+## Хотел создать индекс и повторно выполнить запрос, но получил ошибку, возможно связанную с тем, что закончилась память на координаторе(не менял значение в файлике - 10ГБ):
 ```sql
 CREATE INDEX IDX_payment_type_INCL ON taxi_trips (payment_type,tips,trip_total);
 ```
-
+```text
 ERROR:  server closed the connection unexpectedly
 	This probably means the server terminated abnormally
 	before or while processing the request.
 CONTEXT:  while executing command on citus-worker-0.citus-workers:5432
+```
