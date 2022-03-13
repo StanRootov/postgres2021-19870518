@@ -1,0 +1,16 @@
+{
+    "name": "sql-server-connector",
+    "config": {
+                "connector.class" : "io.debezium.connector.sqlserver.SqlServerConnector",
+                "tasks.max" : "1",
+                "database.server.name" : "mssql",
+                "database.hostname" : "35.209.83.145",
+                "database.port" : "1433",
+                "database.user" : "sa",
+                "database.password" : "123456@Test",
+                "database.dbname" : "testDB",
+                "database.history.kafka.bootstrap.servers" : "10.4.14.219:9092",
+                "database.history.kafka.topic": "mssql.taxitripshistory",
+                "table.include.list": "dbo.taxitrips"
+              }
+}

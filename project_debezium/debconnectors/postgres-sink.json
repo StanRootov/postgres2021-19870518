@@ -1,0 +1,26 @@
+{
+    "name": "postgres-sink",
+    "config": {
+                "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+                "tasks.max": "2",
+                "topics": "mssql.dbo.taxitrips",
+                "connection.url": "jdbc:postgresql://34.121.40.138:5432/testdb",
+                "connection.user":"postgresadmin",
+                "connection.password":"admin123",  
+                "auto.create": "true",
+                "auto-evolve":"true",
+                "insert.mode": "upsert",
+                "delete.enabled": "true",
+                "pk.fields": "uniquekey",
+                "pk.mode": "record_key",
+                "transforms": "route,unwrap,rename_field",
+	            "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+	            "transforms.unwrap.drop.tombstones": "false",
+                "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+                "transforms.route.regex": "([^.]+)\\.([^.]+)\\.([^.]+)",
+                "transforms.route.replacement": "testdb.public.taxi_trips",
+                "transforms.rename_field.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+                "transforms.rename_field.renames": "uniquekey:unique_key, tripstarttimestamp:trip_start_timestamp, tripendtimestamp:trip_end_timestamp,tripseconds:trip_seconds,tripmiles:trip_miles, pickupcensustract:pickup_census_tract, dropoffcensustract:drop_off_census_tract,pickupcommunityarea:pickup_community_area,dropoffcommunityarea:drop_off_community_area,fare:fare,tips:tips,tolls:tolls,extras:extras,trip_total:trip_total,paymenttype:payment_type, company:company,pickuplatitude:pickup_latitude, pickuplongitude:pickup_longitude,pickuplocation:pickup_location,dropofflatitude:drop_off_latitude, dropofflongitude:drop_off_longitude,dropofflocation:drop_off_location",
+                "errors.log.enable": "true"
+            }
+}
