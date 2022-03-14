@@ -4,7 +4,7 @@
                 "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
                 "tasks.max": "2",
                 "topics": "mssql.dbo.taxitrips",
-                "connection.url": "jdbc:postgresql://34.121.40.138:5432/testdb",
+                "connection.url": "jdbc:postgresql://34.135.116.188:5432/testdb",
                 "connection.user":"postgresadmin",
                 "connection.password":"admin123",  
                 "auto.create": "true",

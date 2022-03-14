@@ -115,11 +115,12 @@ kubectl create namespace kafka \
 ```bash
 wget https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.28.0/strimzi-cluster-operator-0.28.0.yaml
 
-cd ~/courses/OTUS/project_debezium
+cd ~/courses/OTUS/git/postgres2021-19870518/project_debezium
  
 sed -i '' 's/namespace: .*/namespace: kafka/' yamls/strimzi-cluster-operator-0.28.0.yaml
 
 kubectl apply -f yamls/strimzi-cluster-operator-0.28.0.yaml -n kafka
+
 ```
 
 **Выполним установку кластера Kafka(3 реплики кластера + 3 реплики Zookeper), не забываем указать пространство имен и необходимый лимит ресурсов:**
@@ -172,7 +173,7 @@ kubectl apply -f yamls/postgres/postgres-configmap.yaml -n postgres \
 
 kubectl get all -n postgres
 
-psql -p 5432 -h 34.121.40.138 -U postgresadmin -d testdb
+psql -p 5432 -h 34.135.116.188 -U postgresadmin -d testdb
 
 #pass: admin123
 ```
@@ -209,9 +210,9 @@ kubectl logs deployment.apps/my-connect-cluster-connect -n kafka -f  | grep "ERR
 **Посмотрим список топиков и попробуем прочитать сообщение из очереди:**
 
 ```bash 
-kubectl exec -n kafka my-cluster-kafka-0 -- bin/kafka-topics.sh --bootstrap-server 10.4.14.219:9092 --list
+kubectl exec -n kafka my-cluster-kafka-0 -- bin/kafka-topics.sh --bootstrap-server 10.4.10.121:9092 --list
 
-kubectl exec -i -n kafka my-cluster-kafka-0 -- bin/kafka-console-consumer.sh --bootstrap-server 10.4.14.219:9092 --topic mssql.dbo.taxitrips --max-messages 1 --from-beginning
+kubectl exec -i -n kafka my-cluster-kafka-0 -- bin/kafka-console-consumer.sh --bootstrap-server 10.4.10.121:9092 --topic mssql.dbo.taxitrips --max-messages 1 --from-beginning
 ```
 
 ```text
@@ -228,7 +229,7 @@ sqlcmd -S localhost -U SA -P "123456@Test"
 USE testdb; 
 GO
 
-UPDATE taxitrips SET tips = 55 WHERE uniquekey = '00001b648cec5f97cf60e8823a42617d181ea2d6';
+UPDATE taxitrips SET tips = 65 WHERE uniquekey = '00001b648cec5f97cf60e8823a42617d181ea2d6';
 GO
 
 SELECT * FROM taxitrips WHERE uniquekey = '00001b648cec5f97cf60e8823a42617d181ea2d6';
